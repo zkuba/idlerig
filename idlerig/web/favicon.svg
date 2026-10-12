@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Same design as idlerig/icon.py -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#16a085"/>
+  <g fill="#fff">
+    <rect x="19.5" y="10" width="5" height="7" rx="1.2"/><rect x="29.5" y="10" width="5" height="7" rx="1.2"/><rect x="39.5" y="10" width="5" height="7" rx="1.2"/>
+    <rect x="19.5" y="47" width="5" height="7" rx="1.2"/><rect x="29.5" y="47" width="5" height="7" rx="1.2"/><rect x="39.5" y="47" width="5" height="7" rx="1.2"/>
+    <rect x="10" y="19.5" width="7" height="5" rx="1.2"/><rect x="10" y="29.5" width="7" height="5" rx="1.2"/><rect x="10" y="39.5" width="7" height="5" rx="1.2"/>
+    <rect x="47" y="19.5" width="7" height="5" rx="1.2"/><rect x="47" y="29.5" width="7" height="5" rx="1.2"/><rect x="47" y="39.5" width="7" height="5" rx="1.2"/>
+    <rect x="15" y="15" width="34" height="34" rx="6"/>
+  </g>
+  <circle cx="32" cy="32" r="11" fill="#16a085"/>
+  <circle cx="37" cy="27" r="10" fill="#fff"/>
+</svg>
