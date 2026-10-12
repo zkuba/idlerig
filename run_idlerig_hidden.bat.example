@@ -1,0 +1,32 @@
+@echo off
+REM =====================================================================
+REM  IdleRig start script without a console window.
+REM  IdleRig keeps running in the background; use the tray icon
+REM  (Open web UI / Exit) to control it. Logs: logs\idlerig.log
+REM
+REM  Same settings as run_idlerig.bat.example - see that file for details.
+REM  To start with Windows, put a shortcut to this file in shell:startup
+REM =====================================================================
+
+set WALLET=YOUR_WALLET
+set POOL=pool.supportxmr.com:3333
+set WORKER=%COMPUTERNAME%
+set THREADS=25%%,50%%,100%%
+set IDLE_AFTER_MIN=2
+set AWAY_AFTER_MIN=10
+set DEBOUNCE_SEC=10
+set DONATE=2
+set HTTP_PORT=5515
+set XMRIG=xmrig.exe
+
+start "" /B "%~dp0IdleRig.exe" ^
+  --wallet %WALLET% ^
+  --pool %POOL% ^
+  --worker %WORKER% ^
+  --threads %THREADS% ^
+  --idle-after-min %IDLE_AFTER_MIN% ^
+  --away-after-min %AWAY_AFTER_MIN% ^
+  --state-debounce-sec %DEBOUNCE_SEC% ^
+  --donate-level %DONATE% ^
+  --xmrig-path %XMRIG% ^
+  --http-port %HTTP_PORT%

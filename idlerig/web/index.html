@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IdleRig</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #f5f7f8; --card: #ffffff; --text: #1d2a30; --muted: #64757d; --line: #dfe5e8;
+    --accent: #0f7b6c; --accent-text: #ffffff; --ok: #1e9e5a; --warn: #c98a00; --bad: #c4382c;
+    --chart: #0f7b6c; --chart-fill: rgba(15, 123, 108, .12); --code: #eef2f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1517; --card: #152024; --text: #d7e4e7; --muted: #8299a0; --line: #243338;
+      --accent: #2bb39f; --accent-text: #06201c; --ok: #3ccf7f; --warn: #f0b429; --bad: #ef6a5e;
+      --chart: #2bb39f; --chart-fill: rgba(43, 179, 159, .15); --code: #0b1214;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; }
+  h1 small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+  .wide { grid-column: 1 / -1; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+          border: 1px solid var(--line); background: var(--card); font-weight: 600; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
+  dt { color: var(--muted); } dd { margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  .big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row + .row { margin-top: 10px; }
+  label { color: var(--muted); font-size: 12px; display: flex; flex-direction: column; gap: 3px; flex: 1 1 140px; }
+  input { font: inherit; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--text); min-width: 0; }
+  button { font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 7px; border: 1px solid var(--accent);
+           background: var(--accent); color: var(--accent-text); cursor: pointer; }
+  button.ghost { background: transparent; color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  canvas { width: 100%; height: 160px; display: block; }
+  pre { background: var(--code); border-radius: 8px; padding: 10px; height: 300px; overflow: auto; margin: 10px 0 0;
+        font: 12px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .muted { color: var(--muted); }
+  a { color: var(--accent); }
+  #toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg);
+           padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); }
+  #toast.show { opacity: .95; }
+  #auth { display: none; }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .bar > div { height: 100%; background: var(--warn); width: 0; }
+  details summary { cursor: pointer; color: var(--muted); }
+  code { font: 12px ui-monospace, Consolas, monospace; background: var(--code); padding: 1px 4px; border-radius: 4px; }
+  .levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .level { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  .level.now { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .level label { color: var(--text); font-size: 13px; font-weight: 600; }
+  .level input { font-weight: 400; margin-top: 4px; }
+  .tag { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 4px; }
+  .level.now .tag::after { content: " · now"; color: var(--accent); font-weight: 600; }
+  .meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 8px 0 6px; }
+  .meter > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .hint { font-size: 12px; min-height: 1.4em; }
+  .hint.bad { color: var(--bad); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>IdleRig <small id="version"></small></h1>
+    <span class="pill"><span id="conn-dot" class="dot"></span><span id="conn">connecting…</span></span>
+  </header>
+
+  <section id="auth" class="card" style="margin-bottom:16px">
+    <h2>Access token required</h2>
+    <p class="muted">Open the UI from the tray icon, or paste the token shown in <code>logs/idlerig.log</code> (or the one passed with <code>--http-token</code>).</p>
+    <div class="row">
+      <label>Token <input id="token-input" type="password" autocomplete="off"></label>
+      <button id="token-save">Save</button>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Miner</h2>
+      <div class="big" id="hashrate">—</div>
+      <div class="muted" id="miner-state" style="margin-bottom:10px">—</div>
+      <dl>
+        <dt>Threads</dt><dd id="threads">—</dd>
+        <dt>Shares</dt><dd id="shares">—</dd>
+        <dt>Uptime</dt><dd id="uptime">—</dd>
+        <dt>Pool</dt><dd id="pool">—</dd>
+        <dt>Worker</dt><dd id="worker">—</dd>
+        <dt>Restarts</dt><dd id="restarts">—</dd>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2>Activity</h2>
+      <div class="big" id="activity-state">—</div>
+      <div class="muted" id="activity-detail" style="margin-bottom:10px">—</div>
+      <dl>
+        <dt>CPU use now</dt><dd id="cpu-now">—</dd>
+        <dt>Idle after</dt><dd id="idle-after">—</dd>
+        <dt>Away after</dt><dd id="away-after">—</dd>
+        <dt>Debounce</dt><dd id="debounce">—</dd>
+        <dt>Logical CPUs</dt><dd id="cpus">—</dd>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2>Dev fee</h2>
+      <div class="big" id="owner">—</div>
+      <div class="muted" id="owner-detail">—</div>
+      <div class="bar"><div id="dev-bar"></div></div>
+      <dl style="margin-top:10px">
+        <dt>Fee</dt><dd id="fee">—</dd>
+        <dt>Dev pool</dt><dd id="dev-pool">—</dd>
+        <dt>Dev wallet</dt><dd><a id="dev-wallet" target="_blank" rel="noopener noreferrer">—</a></dd>
+        <dt>Dev worker</dt><dd id="dev-worker">—</dd>
+        <dt>This session</dt><dd id="dev-contrib">—</dd>
+      </dl>
+    </section>
+
+    <section class="card wide">
+      <h2>Hashrate</h2>
+      <canvas id="chart" aria-label="Hashrate over time" role="img"></canvas>
+      <div class="muted" id="chart-range" style="margin-top:4px">last 10 minutes</div>
+    </section>
+
+    <section class="card wide">
+      <h2>CPU usage</h2>
+      <p class="muted" style="margin:0 0 12px">
+        How much of the processor IdleRig may use depending on whether you are at the computer.
+        A <b>thread</b> is one logical CPU core &mdash; this computer has <b id="cpu-total">?</b>.
+        Enter a number of threads (<code>2</code>) or a share of the CPU (<code>50%</code>); <code>0</code> pauses mining.
+      </p>
+      <div class="levels">
+        <div class="level" id="lvl-active">
+          <label>While you work <span class="tag">active</span><input id="in-active" inputmode="decimal"></label>
+          <div class="meter"><div></div></div>
+          <div class="hint muted"></div>
+        </div>
+        <div class="level" id="lvl-idle">
+          <label>Short break <span class="tag">idle</span><input id="in-idle" inputmode="decimal"></label>
+          <div class="meter"><div></div></div>
+          <div class="hint muted"></div>
+        </div>
+        <div class="level" id="lvl-away">
+          <label>Away / screen locked <span class="tag">away</span><input id="in-away" inputmode="decimal"></label>
+          <div class="meter"><div></div></div>
+          <div class="hint muted"></div>
+        </div>
+      </div>
+      <div class="row">
+        <button id="btn-threads" class="ghost">Apply CPU usage</button>
+      </div>
+    </section>
+
+    <section class="card wide">
+      <h2>Controls</h2>
+      <div class="row">
+        <button id="btn-start">Start</button>
+        <button id="btn-stop" class="ghost">Stop</button>
+        <button id="btn-restart" class="ghost">Restart XMRig</button>
+      </div>
+      <div class="row">
+        <label>Pool <input id="in-pool" placeholder="pool.supportxmr.com:3333"></label>
+        <label>Worker <input id="in-worker"></label>
+        <button id="btn-pool" class="ghost">Apply</button>
+      </div>
+      <p class="muted" style="margin:10px 0 0">Runtime changes last until IdleRig exits. Put permanent settings in your start script.</p>
+    </section>
+
+    <section class="card wide">
+      <h2>Log</h2>
+      <div class="row">
+        <label style="flex:3 1 200px">Filter <input id="log-filter" placeholder="text to match"></label>
+        <label style="flex:0 0 auto;flex-direction:row;align-items:center;gap:6px"><input id="log-follow" type="checkbox" checked> follow</label>
+        <button id="dl-app" class="ghost">idlerig.log</button>
+        <button id="dl-xmrig" class="ghost">xmrig.log</button>
+      </div>
+      <pre id="log"></pre>
+    </section>
+  </div>
+  <p class="muted" style="text-align:center;margin-top:16px">Shares mined during the dev slice support IdleRig development. See docs/dev-fee.md.</p>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const TOKEN_KEY = "idlerig.token";
+
+// Token: from the URL fragment (tray link), else from storage.
+let token = "";
+try { token = localStorage.getItem(TOKEN_KEY) || ""; } catch (_) {}
+const m = location.hash.match(/token=([^&]+)/);
+if (m) {
+  token = decodeURIComponent(m[1]);
+  try { localStorage.setItem(TOKEN_KEY, token); } catch (_) {}
+  history.replaceState(null, "", location.pathname);
+}
+
+async function api(path, body) {
+  const opts = { headers: { "Authorization": "Bearer " + token } };
+  if (body !== undefined) {
+    opts.method = "POST";
+    opts.headers["Content-Type"] = "application/json";
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(path, opts);
+  if (res.status === 401) { showAuth(true); throw new Error("unauthorized"); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+function showAuth(on) { $("auth").style.display = on ? "block" : "none"; }
+$("token-save").onclick = () => {
+  token = $("token-input").value.trim();
+  try { localStorage.setItem(TOKEN_KEY, token); } catch (_) {}
+  showAuth(false); refresh(); logOffset = -1; pollLog();
+};
+
+let toastTimer;
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// ---------- formatting
+function fmtHash(h) {
+  if (h == null) return "—";
+  const u = ["H/s", "kH/s", "MH/s"]; let i = 0;
+  while (h >= 1000 && i < u.length - 1) { h /= 1000; i++; }
+  return h.toFixed(h < 10 ? 2 : h < 100 ? 1 : 0) + " " + u[i];
+}
+function fmtDur(s) {
+  if (s == null) return "—";
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+  if (h) return `${h}h ${String(m).padStart(2, "0")}m`;
+  if (m) return `${m}m ${String(sec).padStart(2, "0")}s`;
+  return `${sec}s`;
+}
+const shortWallet = (w) => w && w.length > 16 ? w.slice(0, 8) + "…" + w.slice(-6) : (w || "—");
+
+// ---------- chart (no external library)
+const points = [];            // [timestampMs, hashrate]
+const WINDOW_MS = 10 * 60 * 1000;
+function drawChart() {
+  const c = $("chart"), dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  c.width = w * dpr; c.height = h * dpr;
+  const ctx = c.getContext("2d"); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
+  const css = getComputedStyle(document.documentElement);
+  const now = Date.now();
+  const pts = points.filter(p => now - p[0] <= WINDOW_MS);
+  const max = Math.max(1, ...pts.map(p => p[1])) * 1.15;
+  ctx.strokeStyle = css.getPropertyValue("--line"); ctx.lineWidth = 1;
+  ctx.fillStyle = css.getPropertyValue("--muted"); ctx.font = "11px system-ui, sans-serif";
+  for (let i = 0; i <= 2; i++) {
+    const y = 6 + (h - 12) * i / 2;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    ctx.fillText(fmtHash(max * (1 - i / 2)), 4, y + (i === 2 ? -4 : 12));
+  }
+  if (pts.length < 2) return;
+  const x = (t) => w - (now - t) / WINDOW_MS * w;
+  const y = (v) => 6 + (h - 12) * (1 - v / max);
+  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(x(p[0]), y(p[1])) : ctx.moveTo(x(p[0]), y(p[1])));
+  ctx.strokeStyle = css.getPropertyValue("--chart"); ctx.lineWidth = 2; ctx.stroke();
+  ctx.lineTo(x(pts[pts.length - 1][0]), h); ctx.lineTo(x(pts[0][0]), h); ctx.closePath();
+  ctx.fillStyle = css.getPropertyValue("--chart-fill"); ctx.fill();
+}
+window.addEventListener("resize", drawChart);
+
+// ---------- CPU usage levels (same rules as idlerig/threads.py)
+const STATES = ["active", "idle", "away"];
+let CPUS = 0;
+
+function parseLevel(text) {
+  text = (text || "").trim();
+  if (!text) return { error: "enter a value" };
+  if (text.endsWith("%")) {
+    const pct = Number(text.slice(0, -1));
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) return { error: "use 0% to 100%" };
+    if (pct === 0) return { threads: 0 };
+    return { threads: Math.min(CPUS, Math.max(1, Math.round(pct / 100 * CPUS))) };
+  }
+  if (!/^\d+$/.test(text)) return { error: "use a whole number (4) or a percentage (50%)" };
+  const n = Number(text);
+  return { threads: Math.min(CPUS, n), capped: n > CPUS };
+}
+
+function describeThreads(n) {
+  if (!CPUS) return String(n);
+  const pct = Math.round(100 * n / CPUS);
+  return `${n} of ${CPUS} threads (≈ ${pct}% of CPU)`;
+}
+
+function updateLevel(st) {
+  const box = $("lvl-" + st), r = parseLevel($("in-" + st).value);
+  const hint = box.querySelector(".hint"), bar = box.querySelector(".meter > div");
+  hint.classList.toggle("bad", !!r.error);
+  if (r.error) { hint.textContent = r.error; bar.style.width = "0"; return; }
+  bar.style.width = (CPUS ? 100 * r.threads / CPUS : 0) + "%";
+  hint.textContent = r.threads === 0 ? "mining paused"
+    : describeThreads(r.threads) + (r.capped ? " — capped to the CPU count" : "");
+}
+
+function setLevels(spec) {
+  const parts = String(spec).split(",").map(p => p.trim()).filter(Boolean);
+  while (parts.length < 3) parts.push(parts[parts.length - 1] || "1");
+  STATES.forEach((st, i) => { $("in-" + st).value = parts[i]; updateLevel(st); });
+}
+STATES.forEach(st => { $("in-" + st).oninput = () => updateLevel(st); });
+
+// ---------- status
+let formsFilled = false;
+async function refresh() {
+  let s;
+  try {
+    s = await api("/api/status");
+  } catch (e) {
+    $("conn").textContent = e.message === "unauthorized" ? "token needed" : "disconnected";
+    $("conn-dot").className = "dot bad";
+    return;
+  }
+  showAuth(false);
+  $("conn").textContent = "connected"; $("conn-dot").className = "dot ok";
+  $("version").textContent = "v" + s.version;
+
+  const mi = s.miner, ac = s.activity, df = s.dev_fee;
+  $("hashrate").textContent = mi.running && !mi.paused ? fmtHash(mi.hashrate) : "—";
+  $("miner-state").textContent = !mi.running ? (mi.paused ? "paused (XMRig stopped)" : "stopped")
+    : mi.paused ? "paused" : `running, pid ${mi.pid}`;
+  CPUS = s.activity.cpu_count;
+  $("threads").textContent = mi.paused ? "0 (paused)" : describeThreads(mi.threads);
+  $("shares").textContent = `${mi.shares.accepted} accepted / ${mi.shares.rejected} rejected`;
+  $("uptime").textContent = fmtDur(mi.uptime);
+  $("pool").textContent = mi.pool;
+  $("worker").textContent = mi.worker;
+  $("restarts").textContent = mi.restarts;
+
+  $("activity-state").textContent = ac.state || "starting";
+  $("activity-detail").textContent = ac.locked ? "screen locked" : `no input for ${fmtDur(ac.idle_seconds)}`;
+  $("cpu-now").textContent = !mi.running ? "—" : mi.paused ? "paused" : describeThreads(mi.threads);
+  $("cpu-total").textContent = `${CPUS} threads`;
+  for (const st of STATES) $("lvl-" + st).classList.toggle("now", ac.state === st);
+  $("idle-after").textContent = fmtDur(ac.idle_after);
+  $("away-after").textContent = fmtDur(ac.away_after) + " or screen locked";
+  $("debounce").textContent = fmtDur(ac.debounce);
+  $("cpus").textContent = ac.cpu_count;
+
+  const dev = df.owner === "dev";
+  $("owner").textContent = dev ? "Dev slice" : "Mining for you";
+  $("owner-detail").textContent = df.waiting_for_share ? "dev slice: waiting for the first accepted share"
+    : df.seconds_to_next == null ? "—"
+    : (dev ? "back to you in " : "next dev slice in ") + fmtDur(df.seconds_to_next);
+  const total = dev ? df.dev_minutes * 60 : (df.cycle_minutes - df.dev_minutes) * 60;
+  $("dev-bar").style.width = dev && df.seconds_to_next != null && total
+    ? Math.min(100, 100 * (1 - df.seconds_to_next / total)) + "%" : "0";
+  $("fee").textContent = `${df.percent}% — ${df.dev_minutes} min every ${Math.round(df.cycle_minutes)} min`;
+  $("dev-pool").textContent = df.dev_pool;
+  $("dev-wallet").textContent = shortWallet(df.dev_wallet);
+  $("dev-wallet").href = df.dev_dashboard;
+  $("dev-wallet").title = df.dev_wallet;
+  $("dev-worker").textContent = df.dev_worker;
+  $("dev-contrib").textContent = `${df.dev_slices} slice(s), ${df.dev_shares} share(s)`;
+
+  $("btn-start").disabled = mi.running;
+  $("btn-stop").disabled = !mi.running && !mi.paused;
+
+  if (!formsFilled) {
+    setLevels(ac.threads_spec);
+    $("in-pool").value = s.user.pool;
+    $("in-worker").value = s.user.worker;
+    formsFilled = true;
+  }
+
+  points.push([Date.now(), mi.running && !mi.paused && mi.hashrate != null ? mi.hashrate : 0]);
+  while (points.length && Date.now() - points[0][0] > WINDOW_MS) points.shift();
+  drawChart();
+}
+
+// ---------- controls
+async function control(body, label) {
+  try { await api("/api/control", body); toast(label + ": ok"); }
+  catch (e) { toast(label + " failed: " + e.message); }
+  refresh();
+}
+$("btn-start").onclick = () => control({ action: "start" }, "Start");
+$("btn-stop").onclick = () => control({ action: "stop" }, "Stop");
+$("btn-restart").onclick = () => control({ action: "restart" }, "Restart");
+$("btn-threads").onclick = () => {
+  const spec = STATES.map(st => $("in-" + st).value.trim()).join(",");
+  if (STATES.some(st => parseLevel($("in-" + st).value).error)) { toast("Fix the highlighted values first"); return; }
+  control({ action: "set_threads", threads: spec }, "CPU usage");
+};
+$("btn-pool").onclick = () => control({ action: "set_pool", pool: $("in-pool").value, worker: $("in-worker").value }, "Pool");
+
+async function download(path, name) {
+  try {
+    const res = await fetch(path, { headers: { "Authorization": "Bearer " + token } });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a"); a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) { toast("Download failed: " + e.message); }
+}
+$("dl-app").onclick = () => download("/api/download/app", "idlerig.log");
+$("dl-xmrig").onclick = () => download("/api/download/xmrig", "xmrig.log");
+
+// ---------- log (incremental)
+const LOG_MAX = 2000;
+let logLines = [], logOffset = -1;
+function renderLog() {
+  const f = $("log-filter").value.toLowerCase();
+  const pre = $("log");
+  pre.textContent = (f ? logLines.filter(l => l.toLowerCase().includes(f)) : logLines).join("\n");
+  if ($("log-follow").checked) pre.scrollTop = pre.scrollHeight;
+}
+async function pollLog() {
+  try {
+    const r = await api("/api/logs?since=" + logOffset);
+    if (r.offset < logOffset) logLines = [];
+    logOffset = r.offset;
+    if (r.lines.length) {
+      logLines = logLines.concat(r.lines).slice(-LOG_MAX);
+      renderLog();
+    }
+  } catch (_) {}
+}
+$("log-filter").oninput = renderLog;
+
+refresh(); pollLog();
+setInterval(refresh, 3000);
+setInterval(pollLog, 2000);
+</script>
+</body>
+</html>

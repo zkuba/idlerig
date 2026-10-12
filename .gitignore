@@ -1,121 +1,47 @@
-########################################
 # Python
-########################################
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-
-# Virtual environments
 .venv/
 venv/
 env/
-
-# Build / packaging
-build/
-dist/
+.pytest_cache/
+.hypothesis/
+.coverage
 *.egg-info/
 
-########################################
-# Logs
-########################################
-*.log
-xmrig_stdout.log
-
-########################################
-# OS files
-########################################
-.DS_Store
-Thumbs.db
-desktop.ini
-
-########################################
-# VS Code
-########################################
-.vscode/
-
-########################################
-# Secrets / configs (do NOT commit real configs)
-########################################
-miner_config.json
-wallet.key
-*.pem
-*.key
-
-########################################
-# Binaries / executables
-########################################
-*.exe
-*.dll
-*.so
-*.bin
-xmrig
-xmrig.exe
-
-########################################
-# Misc
-########################################
-*.tmp
-*.bak
-
-# Python & env & IDE
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-env/
-venv/
-.venv/
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
-.python-version
-*.egg-info/
-dist/
+# Build output (Nuitka / PyInstaller)
 build/
+dist/
+*.build/
 *.dist/
 *.onefile-build/
 *.spec
-*.spec.*
-*.egg
-.eggs/
-*.whl
 
-# test / coverage
-.coverage
-.cache
-.pytest_cache/
-.hypothesis/
-templates
-tests
-scr
-
-# IDE
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# Logs & runtime artifacts
+# Runtime
 logs/
 *.log
-*.out
-*.err
 
-# packaging / build outputs and installers
-*.zip
-*.tar.gz
+# Binaries
 *.exe
+*.dll
+*.zip
 *.msi
-
-# local/run scripts / temp
-run_miner.bat
+xmrig
 CHECKSUMS.txt
-README.txt
-build_nuitka.ps1
-miner_http_tray_cli_only.dist/
-miner_http_tray_cli_only.build/
-miner_http_tray_cli_only.onefile-build/
-miner_http_tray.exe
-zenminer.spec
-miner_http_tray.spec
+
+# Local start scripts (copy from *.bat.example)
+run_idlerig.bat
+run_idlerig_hidden.bat
+run_miner.bat
+
+# Secrets
+*.pem
+*.key
+*.pfx
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,54 @@
+@echo off
+REM =====================================================================
+REM  IdleRig start script. This window stays open while IdleRig runs;
+REM  closing it does NOT stop IdleRig - use the tray icon (Exit) for that.
+REM  Live log: tray icon -> Open web UI, or logs\idlerig.log
+REM
+REM  1. Copy this file to run_idlerig.bat
+REM  2. Put your own wallet address in WALLET below
+REM  3. Put xmrig.exe next to IdleRig.exe (or set XMRIG to its full path)
+REM  Docs: docs\configuration.md
+REM =====================================================================
+
+REM Your Monero wallet address (IdleRig refuses to start with the placeholder)
+set WALLET=YOUR_WALLET
+
+REM Pool host:port. Add --tls below if the port expects TLS (e.g. 443).
+set POOL=pool.supportxmr.com:3333
+
+REM Worker name shown on the pool dashboard
+set WORKER=%COMPUTERNAME%
+
+REM Threads for active,idle,away. In .bat files every % must be written as %%.
+set THREADS=25%%,50%%,100%%
+
+REM active -> idle after this many minutes without keyboard/mouse input
+set IDLE_AFTER_MIN=2
+REM -> away after this many minutes without input (a locked screen is always away)
+set AWAY_AFTER_MIN=10
+REM A lower-activity state must hold this many seconds before it is applied
+set DEBOUNCE_SEC=10
+
+REM Dev fee in percent (minimum 1, default 2). See docs\dev-fee.md
+set DONATE=2
+
+REM Web UI (http://127.0.0.1:%HTTP_PORT%/). Leave HTTP_TOKEN empty for a random one per run.
+set HTTP_PORT=5515
+set HTTP_TOKEN=
+
+set XMRIG=xmrig.exe
+
+set TOKEN_ARG=
+if not "%HTTP_TOKEN%"=="" set TOKEN_ARG=--http-token %HTTP_TOKEN%
+
+"%~dp0IdleRig.exe" ^
+  --wallet %WALLET% ^
+  --pool %POOL% ^
+  --worker %WORKER% ^
+  --threads %THREADS% ^
+  --idle-after-min %IDLE_AFTER_MIN% ^
+  --away-after-min %AWAY_AFTER_MIN% ^
+  --state-debounce-sec %DEBOUNCE_SEC% ^
+  --donate-level %DONATE% ^
+  --xmrig-path %XMRIG% ^
+  --http-port %HTTP_PORT% %TOKEN_ARG%
