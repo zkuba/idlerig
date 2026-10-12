@@ -32,7 +32,7 @@ Changes are applied live through XMRig's HTTP API, without restarting the miner.
 
 ## Quick start
 
-1. Download `IdleRig-<version>.exe` from the releases page and get
+1. Download `IdleRig-<version>.exe` from the [releases page](https://github.com/zkuba/idlerig/releases) and get
    [XMRig](https://github.com/xmrig/xmrig/releases) (the `msvc-win64` zip). Put `xmrig.exe` in
    the same folder.
 2. Copy `run_idlerig.bat.example` to `run_idlerig.bat` and set `WALLET` to **your** Monero address.

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.0 (2026-10-12)
 
 ZenMiner is now **IdleRig**. See [docs/migration-from-zenminer.md](docs/migration-from-zenminer.md).
 

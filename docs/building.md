@@ -9,7 +9,7 @@
 ## Set up
 
 ```powershell
-git clone https://github.com/zkuba/zenminer.git idlerig
+git clone https://github.com/zkuba/idlerig.git
 cd idlerig
 python -m venv .venv
 .venv\Scripts\pip install -r requirements-dev.txt
