@@ -57,6 +57,8 @@ ZenMiner is now **IdleRig**. See [docs/migration-from-zenminer.md](docs/migratio
 - **XMRig output goes to `logs/xmrig.log`** via XMRig's own `--log-file`. On Windows XMRig writes
   nothing to a redirected stdout.
 - **The log records who started or stopped mining** (tray or web UI).
+- **The windowless .exe shows start-up errors and `--help` / `--version` in a message box**
+  instead of exiting silently.
 
 ### Security
 

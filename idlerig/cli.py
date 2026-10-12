@@ -41,8 +41,47 @@ def app_dir() -> Path:
     return Path.cwd()
 
 
+def show_message(text: str, error: bool) -> None:
+    """Message box for the windowless build, where stdout/stderr do not exist."""
+    import ctypes
+    flags = 0x10 if error else 0x40  # MB_ICONERROR / MB_ICONINFORMATION
+    ctypes.windll.user32.MessageBoxW(None, text.strip(), __app_name__, flags)
+
+
+def has_console() -> bool:
+    """False for the windowless .exe (stdout/stderr then go nowhere).
+
+    Only the compiled build is checked for a console window: a source run with
+    piped output (tests, CI) has no console window but a perfectly good stdout.
+    """
+    if sys.stdout is None:
+        return False
+    if sys.platform == "win32" and "__compiled__" in globals():
+        import ctypes
+        return bool(ctypes.windll.kernel32.GetConsoleWindow())
+    return True
+
+
+class Parser(argparse.ArgumentParser):
+    """ArgumentParser that falls back to a message box when there is no console."""
+
+    def _print_message(self, message: str, file=None) -> None:
+        if not message:
+            return
+        if sys.platform == "win32" and not has_console():
+            show_message(message, error="error:" in message)
+            return
+        stream = file or sys.stdout
+        if stream is not None:
+            stream.write(message)
+
+    def error(self, message: str):
+        # One message instead of argparse's separate usage + error outputs.
+        self.exit(2, f"{self.prog}: error: {message}\n\nRun IdleRig --help for all options.\n")
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
+    p = Parser(
         prog="IdleRig",
         description="Activity-aware controller for XMRig: few threads while you work, "
                     "more when you are away.",
